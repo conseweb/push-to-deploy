@@ -2,8 +2,13 @@
 # -*- coding: UTF-8 -*-                                                                  
 #post-receive                                                                            
 
+import os
 import sys                                                                               
 import subprocess                                                                        
+
+deploy_to_dir = os.path.abspath("../deploy")
+develop_dir = os.path.abspath("../app.dev")
+log_dir = os.path.abspath("../log")
 
 # 1. Read STDIN (Format: "from_commit to_commit branch_name")                            
 (old, new, branch) = sys.stdin.read().split()                                            
@@ -11,12 +16,13 @@ import subprocess
 # 2. Only deploy if master branch was pushed                                             
 if branch == 'refs/heads/master':                                                        
     subprocess.call('date >> ../prod-deployment.log', shell=True)                         
-    subprocess.call('GIT_WORK_TREE=../deploy git checkout master -f', shell=True)
-    # subprocess.call('cd ../../app.prod;bower update', shell=True)                        
+    subprocess.call('GIT_WORK_TREE=%s git checkout master -f' % (deploy_to_dir), shell=True)
+    # subprocess.call('cd ../../app.prod;bower update', shell=True)              
+    print "DEPLOY: master(%s) copied to '%s'" % (new, deploy_to_dir)          
 
 #3. Only deploy if develop branch was pushed                                             
 if branch == 'refs/heads/develop':                                                       
     subprocess.call('date >> ../dev-deployment.log', shell=True)                          
-    subprocess.call('GIT_WORK_TREE=../app.dev git checkout develop -f', shell=True)
-    subprocess.call('cd ../../app.dev;bower update', shell=True)            
+    subprocess.call('GIT_WORK_TREE=%s git checkout develop -f' % (develop_dir), shell=True)
+    # subprocess.call('cd ../../app.dev;bower update', shell=True)            
 
