@@ -28,7 +28,9 @@ cmd_start_app = '/usr/local/bin/circusctl start %s' % appname
 cmd_build_app = '/usr/bin/go build -o bin/conseweb src/main.go'
 
 # 1. Read STDIN (Format: "from_commit to_commit branch_name")                            
-(old, new, branch) = sys.stdin.read().split()                                            
+(old, new, branch) = sys.stdin.read().split()
+
+print("RECEIVED branch %s ." % branch)                                            
 
 # 2. Only deploy if master branch was pushed                                             
 if branch == 'refs/heads/master':                                                        
