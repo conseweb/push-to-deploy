@@ -27,6 +27,8 @@ cmd_stop_app = '/usr/local/bin/circusctl stop %s' % appname
 cmd_start_app = '/usr/local/bin/circusctl start %s' % appname
 cmd_build_app = '/usr/bin/go build -o bin/conseweb src/main.go'
 
+os.environ["GOPATH"] = "/home/ubuntu/gopath"
+
 # 1. Read STDIN (Format: "from_commit to_commit branch_name")                            
 (old, new, branch) = sys.stdin.read().split()
 
@@ -47,6 +49,8 @@ if branch == 'refs/heads/master':
     # subprocess.call('cd ../../app.prod;bower update', shell=True)              
     print "DEPLOY: master(%s) copied to '%s'" % (new, deploy_to_dir)    
     # rebuild the app
+    # change to deploy dir
+    os.chdir(deploy_to_dir)
     subprocess.call(cmd_build_app, shell=True)
     # start the app
     subprocess.call(cmd_start_app, shell=True)
