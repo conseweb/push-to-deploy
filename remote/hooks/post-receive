@@ -4,25 +4,69 @@
 
 import os
 import sys                                                                               
-import subprocess                                                                        
+import subprocess             
+import shutil
+import time
+
+def ensure_dir(f):
+    d = os.path.dirname(f)
+    if not os.path.exists(d):
+        os.makedirs(d)
+
+
+def get_timeticks():
+	return str(time.time()).split('.')[0]
+
 
 deploy_to_dir = os.path.abspath("../deploy")
+backup_dir = os.path.abspath("../backup")
 develop_dir = os.path.abspath("../app.dev")
 log_dir = os.path.abspath("../log")
+appname = 'conseweb'
+cmd_stop_app = '/usr/local/bin/circusctl stop %s' % appname
+cmd_start_app = '/usr/local/bin/circusctl start %s' % appname
+cmd_build_app = '/usr/bin/go build -o bin/conseweb src/main.go'
 
 # 1. Read STDIN (Format: "from_commit to_commit branch_name")                            
 (old, new, branch) = sys.stdin.read().split()                                            
 
 # 2. Only deploy if master branch was pushed                                             
 if branch == 'refs/heads/master':                                                        
-    subprocess.call('date >> ../prod-deployment.log', shell=True)                         
+    subprocess.call('date >> ../prod-deployment.log', shell=True)  
+    # stop some service     
+    subprocess.call(cmd_stop_app, shell=True)
+    print 'STOP the app'
+    # rename src, dst
+    dst = backup_dir+'-%s' % get_timeticks()
+    os.rename(deploy_to_dir, dst)
+    # shutil.rmtree(deploy_to_dir)
+    os.mkdir(deploy_to_dir)
     subprocess.call('GIT_WORK_TREE=%s git checkout master -f' % (deploy_to_dir), shell=True)
     # subprocess.call('cd ../../app.prod;bower update', shell=True)              
-    print "DEPLOY: master(%s) copied to '%s'" % (new, deploy_to_dir)          
+    print "DEPLOY: master(%s) copied to '%s'" % (new, deploy_to_dir)    
+    # rebuild the app
+    subprocess.call(cmd_build_app, shell=True)
+    # start the app
+    subprocess.call(cmd_start_app, shell=True)
+    print("START the app")     
 
 #3. Only deploy if develop branch was pushed                                             
 if branch == 'refs/heads/develop':                                                       
     subprocess.call('date >> ../dev-deployment.log', shell=True)                          
-    subprocess.call('GIT_WORK_TREE=%s git checkout develop -f' % (develop_dir), shell=True)
     # subprocess.call('cd ../../app.dev;bower update', shell=True)            
+    # stop some service
+    print('STOP the app')
+    # rename src, dst
+    dst = backup_dir+'-%s' % get_timeticks()
+    os.rename(deploy_to_dir, dst)
+    # shutil.rmtree(deploy_to_dir)
+    os.mkdir(deploy_to_dir)
+    subprocess.call('GIT_WORK_TREE=%s git checkout develop -f' % (deploy_to_dir), shell=True)
+    # subprocess.call('cd ../../app.prod;bower update', shell=True)              
+    print("DEPLOY: master(%s) copied to '%s'" % (new, deploy_to_dir))
+    # rebuild the app
+    print("Build the app ...")
+    # start the app
+    # subprocess.call(cmd_start_app)
+    print("START the app ...")     
 
